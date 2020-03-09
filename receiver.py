@@ -4,17 +4,25 @@ import asyncio
 import websockets
 import requests
 import json
+import urllib.parse
 
-API_ENDPOINT_SOCRE = "http://localhost:8080/transaction-validation"
-API_WEBSOCKET_TRANSACTION = "ws://localhost:8080/transaction-stream/username/"
+API_HOST = "35.180.196.161"
+API_PORT = "8080"
+API_ENDPOINT_SCORE = "/transaction-validation"
+API_WEBSOCKET_TRANSACTION = "ws://" + API_HOST + ":" + API_PORT + "/transaction-stream/username/"
+
 TEAM_NAME="team1"
 TEAM_PASSWORD="pass1"
 
-def isTransactionFraudulent(transaction):
-    return True
-
 def send_value(transaction_id, is_fraudulent):
-    url = API_ENDPOINT_SOCRE + "?username=" + TEAM_NAME + "&password=" + TEAM_PASSWORD
+    url = "http://" + API_HOST + ":" + API_PORT + API_ENDPOINT_SCORE
+    params = {
+        'username': TEAM_NAME,
+        'password': TEAM_PASSWORD
+    }
+    queryParams = urllib.parse.urlencode(params)
+    url += "?" + queryParams
+
     # data to be sent to api
     data = {
         'fraudulent': is_fraudulent,
@@ -29,17 +37,29 @@ def send_value(transaction_id, is_fraudulent):
 async def receive_transaction():
     uri = API_WEBSOCKET_TRANSACTION + TEAM_NAME
     async with websockets.connect(uri) as websocket:
-        await websocket.send("Hello world!")
-
         while True:
-            # data recieved from the API
-            received = json.loads(await websocket.recv())
-            print(('data received', received))
+            try:
+                received = json.loads(await websocket.recv())
+                process_transactions(received)
+            except:
+                print('Reconnecting')
+                websocket = await websockets.connect(uri)
 
-            # Sending data back to the API to compute score
-            for transaction in received:
-                send_value(transaction['id'], True)
 
-asyncio.get_event_loop().run_until_complete(receive_transaction())
+def process_transactions(transactions):
+    for transaction in transactions:
+        is_fraud = is_transaction_fraudulent(transaction)
 
+        # Sending data back to the API to compute score
+        # send_value(transaction['id'], is_fraud)
+
+    return True;
+
+def is_transaction_fraudulent(transaction):
+    return True
+
+
+
+if __name__== "__main__":
+    asyncio.get_event_loop().run_until_complete(receive_transaction())
 
