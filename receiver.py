@@ -50,8 +50,7 @@ def process_transactions(transactions):
     # Sending data back to the API to compute score
     for transaction in transactions:
         is_fraud = is_transaction_fraudulent(transaction)
-        print(is_fraud)
-        send_value(transaction['id'], is_fraud)
+        # send_value(transaction['id'], is_fraud)
 
     return True;
 
