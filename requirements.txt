@@ -1,2 +1,4 @@
 websockets
 requests
+pandas
+sklearn
